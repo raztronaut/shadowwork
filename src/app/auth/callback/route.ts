@@ -1,22 +1,32 @@
-import { createClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const origin = requestUrl.origin
 
   if (code) {
-    const cookieStore = cookies()
     const supabase = createClient()
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (error) {
+        console.error('Auth error:', error.message)
+        return NextResponse.redirect(`${origin}/auth-error?error=${encodeURIComponent(error.message)}`)
+      }
 
-    if (!error) {
-      return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+      if (data.session) {
+        // Successfully authenticated, redirect to dashboard
+        return NextResponse.redirect(`${origin}/dashboard`)
+      }
+    } catch (error) {
+      console.error('Callback error:', error)
+      return NextResponse.redirect(`${origin}/auth-error?error=Unknown error occurred`)
     }
   }
 
-  // Return the user to an error page with some instructions
-  return NextResponse.redirect(`${requestUrl.origin}/auth-error`)
+  // No code provided
+  return NextResponse.redirect(`${origin}/auth-error?error=No code provided`)
 } 

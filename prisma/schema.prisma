@@ -13,16 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String         @id @default(cuid())
-  clerkId       String         @unique
-  email         String         @unique
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  journalEntries JournalEntry[]
-  goals         Goal[]
-}
-
 model JournalEntry {
   id          String   @id @default(cuid())
   title       String
@@ -30,7 +20,6 @@ model JournalEntry {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mood        String?
   tags        String[]
   aiPrompt    String?  @db.Text
@@ -47,7 +36,6 @@ model Goal {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   dueDate     DateTime?
   reflections String[] @db.Text
 
